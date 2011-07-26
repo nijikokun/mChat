@@ -40,16 +40,20 @@ public class mChat extends JavaPlugin {
 	String chatFormat = "+p+dn+s&f: +message";
 	String nameFormat = "+p+dn+s&e";
 	String dateFormat = "HH:mm:ss";
+	String joinMessage = "has joined the game.";
+	String leaveMessage = "has left the game.";
+	String kickMessage = "has been kicked from the game.";
+	String contribChatColour = "dark_red";
 	String prefix = "";
 	String suffix = "";
-	String groups = "";
+	String group = "";
 	
-	HashMap<Player, String> channelInfo = new HashMap<Player, String>();
 	HashMap<String, Object> prefixes = new HashMap<String, Object>();
 	HashMap<String, Object> suffixes = new HashMap<String, Object>();
 	HashMap<String, Object> groupes = new HashMap<String, Object>();
 	HashMap<String, Object> mchat = new HashMap<String, Object>();
 	HashMap<Player, Boolean> chatt = new HashMap<Player, Boolean>();
+	HashMap<Player, Boolean> playerEvent = new HashMap<Player, Boolean>();
 	
 	public void onEnable() {
 		pm = getServer().getPluginManager();
@@ -72,7 +76,6 @@ public class mChat extends JavaPlugin {
 		pm.registerEvent(Event.Type.PLAYER_CHAT, pListener, Priority.High, this);
 		pm.registerEvent(Event.Type.PLAYER_JOIN, pListener, Priority.High, this);
 		pm.registerEvent(Event.Type.PLAYER_QUIT, pListener, Priority.High, this);
-		getCommand("mchannel").setExecutor(cSender);
 		getCommand("mchat").setExecutor(cSender);
 		
 		if (contrib) {
@@ -86,9 +89,9 @@ public class mChat extends JavaPlugin {
 				pdfFile.getVersion() + " is enabled!");
 		
 		for (Player players : getServer().getOnlinePlayers()) {
-			channelInfo.put(players, "public");
 			if (contrib) {
-				BukkitContrib.getAppearanceManager().setGlobalTitle(players, parseNameFormat(players));
+				BukkitContrib.getAppearanceManager().setGlobalTitle(players, parseChat(players));
+				playerEvent.put(players, false);
 				chatt.put(players, false);
 			}
 		}
@@ -106,6 +109,11 @@ public class mChat extends JavaPlugin {
 		chatFormat = config.getString("mchat-message-format", chatFormat);
 		nameFormat = config.getString("mchat-name-format", nameFormat);
 		dateFormat = config.getString("mchat-date-format", dateFormat);
+		joinMessage = config.getString("mchat-join-message", joinMessage);
+		leaveMessage = config.getString("mchat-leave-message", leaveMessage);
+		kickMessage	= config.getString("mchat-kick-message", kickMessage);
+		contribChatColour = config.getString("mchat-colouring", contribChatColour);
+
 		if (config.getNode("mchat.prefix") != null) {
 			prefixes.putAll(config.getNode("mchat.prefix").getAll());
 		}
@@ -123,10 +131,16 @@ public class mChat extends JavaPlugin {
 		config.setHeader(
 	            "# mChat configuration file",
 	            "# ",
+				"#           **IMPORTANT**",
+				"#   usage of mchat-message-format is restricted to:",
+				"#       +suffix,+s, +prefix,+p, +group,+g, +world,+w, +time,+t, +name,+n, +dname,+dn, +message,+m",
+				"# ",
+				"#   usage of mchat-name-format is restricted to:",
+				"#       +suffix,+s, +prefix,+p, +group,+g, +world,+w, +time,+t, +name,+n, +dname,+dn",
+				"#           **************",
+	            "# ",
 	            "# Use of mchat: is only if your using PermissionsBukkit (superperms)",
 	            "# ignore it if you don't know what that is.",
-	            "# usage of mchat-message-format is restricted to:",
-	            "# +suffix,+s, +prefix,+p, +group,+g, +world,+w, +time,+t, +name,+n, +dname,+dn, +message,+m",
 	            "");
 		groupes.put("admin", "");
 		groupes.put("sadmin", "");
@@ -146,7 +160,12 @@ public class mChat extends JavaPlugin {
 		config.setProperty("mchat-date-format", dateFormat);
 		config.setProperty("mchat-message-format", chatFormat);
 		config.setProperty("mchat-name-format", nameFormat);
+		config.setProperty("mchat-join-message", joinMessage);
+		config.setProperty("mchat-leave-message", leaveMessage);
+		config.setProperty("mchat-kick-message", kickMessage);
 		config.setProperty("mchat", mchat);
+		config.setProperty("mchat-colouring", contribChatColour);
+		config.setProperty("auto-Changed", 1);
 		config.save();
 	}
 	
@@ -155,10 +174,10 @@ public class mChat extends JavaPlugin {
 		Configuration config = new Configuration(new File(getDataFolder(), "config.yml"));
 		config.load();
 		if (config.getProperty("auto-Changed") == null) {
-			config.setProperty("auto-Changed", "1");
+			config.setProperty("auto-Changed", 1);
 		}
 		
-		if (config.getProperty("auto-Changed") == "1") {
+		if (config.getInt("auto-Changed", 1) == 1) {
 			if (config.getProperty("mchat-date-format") == null) {
 				config.setProperty("mchat-date-format", dateFormat);
 				hasChanged = true;
@@ -171,6 +190,26 @@ public class mChat extends JavaPlugin {
 			
 			if (config.getProperty("mchat-name-format") == null) {
 				config.setProperty("mchat-name-format", nameFormat);
+				hasChanged = true;
+			}
+			
+			if (config.getProperty("mchat-join-message") == null) {
+				config.setProperty("mchat-join-message", joinMessage);
+				hasChanged = true;
+			}
+			
+			if (config.getProperty("mchat-leave-message") == null) {
+				config.setProperty("mchat-leave-message", leaveMessage);
+				hasChanged = true;
+			}
+			
+			if (config.getProperty("mchat-kick-message") == null) {
+				config.setProperty("mchat-kick-message", kickMessage);
+				hasChanged = true;
+			}
+			
+			if (config.getProperty("mchat-colouring") == null) {
+				config.setProperty("mchat-colouring", contribChatColour);
 				hasChanged = true;
 			}
 			
@@ -194,28 +233,45 @@ public class mChat extends JavaPlugin {
 				hasChanged = true;
 			}
 		}
-		if (config.getProperty("auto-Changed") == "2") {
+		if (!(config.getInt("auto-Changed", 1) == 1)) {
 			hasChanged = true;
-			config.setProperty("auto-Changed", "1");
+			config.setProperty("auto-Changed", 1);
 		}
 		
 		if (hasChanged) {
-			config.setProperty("mchat", mchat);
 			config.setHeader(
 		            "# mChat configuration file",
 		            "# ",
+					"#           **IMPORTANT**",
+					"#   usage of mchat-message-format is restricted to:",
+					"#       +suffix,+s, +prefix,+p, +group,+g, +world,+w, +time,+t, +name,+n, +dname,+dn, +message,+m,+msg",
+					"# ",
+					"#   usage of mchat-name-format is restricted to:",
+					"#       +suffix,+s, +prefix,+p, +group,+g, +world,+w, +time,+t, +name,+n, +dname,+dn",
+					"#           **************",
+		            "# ",
 		            "# Use of mchat: is only if your using PermissionsBukkit (superperms)",
 		            "# ignore it if you don't know what that is.",
-		            "# usage of mchat-message-format is restricted to:",
-		            "# +suffix,+s, +prefix,+p, +group,+g, +world,+w, +time,+t, +name,+n, +dname,+dn, +message,+m",
 		            "");
 			System.out.println("[" + pdfFile.getName() + "]" + " config.yml has been updated.");
 			config.save();
 		}
 	}
 	
+	public String replaceMess(Player player, String string) {
+		if (string == "joinMessage") {
+			string = joinMessage;
+		} else if (string == "kickMessage") {
+			string = kickMessage;
+		} else if (string == "leaveMessage") {
+			string = leaveMessage;
+		}
+		return string.replaceAll("(&([A-Fa-f0-9]))", "\u00A7$2");
+	}	
+	
 	/*
 	 * Beginning of work initially taken from Drakia's iChat.
+	 * (I have added and removed A BUNCH.)
 	 */
 	
 	public String replaceVars(String format, String[] search, String[] replace) {
@@ -233,7 +289,8 @@ public class mChat extends JavaPlugin {
 		return format.replaceAll("(&([A-Fa-f0-9]))", "\u00A7$2");
 	}
 	
-	public String parseChat(Player player, String msg, String chatFormat) {
+	public String parseChat(Player player, String msg, String formatAll) {
+		playerEvent.put(player, false);
 		String prefix = getPrefix(player);
 		String suffix = getSuffix(player);
 		String group = getGroup(player);
@@ -244,37 +301,31 @@ public class mChat extends JavaPlugin {
 		Date now = new Date();
 		SimpleDateFormat dateFormat = new SimpleDateFormat(this.dateFormat);
 		String time = dateFormat.format(now);
-		msg = msg.replaceAll("%", "%%");
-		String format = (chatFormat);
-		if (format == null) return msg;
-		String[] search = new String[] {"+suffix,+s", "+prefix,+p", "+group,+g", "+world,+w", "+time,+t", "+name,+n", "+dname,+dn", "+message,+m"};
-		String[] replace = new String[] { suffix, prefix, group, world, time, player.getName(), player.getDisplayName(), msg };
+		String format = (formatAll);
+		String[] search;
+		String[] replace;
+		if (msg == "") {
+			search = new String[] {"+suffix,+s", "+prefix,+p", "+group,+g", "+world,+w", "+time,+t", "+name,+n", "+dname,+dn"};
+			replace = new String[] { suffix, prefix, group, world, time, player.getName(), player.getDisplayName() };
+		} else {
+			msg = msg.replaceAll("%", "%%");
+			if (format == null) return msg;
+			search = new String[] {"+suffix,+s", "+prefix,+p", "+group,+g", "+world,+w", "+time,+t", "+name,+n", "+dname,+dn", "+message,+m,+msg"};
+			replace = new String[] { suffix, prefix, group, world, time, player.getName(), player.getDisplayName(), msg };
+		}
 		return replaceVars(format, search, replace);
 	}
 	
 	public String parseChat(Player player, String msg) {
-		return parseChat(player, msg, this.chatFormat);
+		if (playerEvent.get(player)) {
+			return parseChat(player, msg, this.nameFormat);
+		} else {
+			return parseChat(player, msg, this.chatFormat);
+		}
 	}
 	
-	public String parseNameFormat(Player player, String nameFormat) {
-		String prefix = getPrefix(player);
-		String suffix = getSuffix(player);
-		String group = getGroup(player);
-		if (prefix == null) prefix = "";
-		if (suffix == null) suffix = "";
-		if (group == null) group = "";
-		String world = player.getWorld().getName();
-		Date now = new Date();
-		SimpleDateFormat dateFormat = new SimpleDateFormat(this.dateFormat);
-		String time = dateFormat.format(now);
-		String format = (nameFormat);
-		String[] search = new String[] {"+suffix,+s", "+prefix,+p", "+group,+g", "+world,+w", "+time,+t", "+name,+n", "+dname,+dn"};
-		String[] replace = new String[] { suffix, prefix, group, world, time, player.getName(), player.getDisplayName() };
-		return replaceVars(format, search, replace);
-	}
-
-	public String parseNameFormat(Player player) {
-		return parseNameFormat(player, nameFormat);
+	public String parseChat(Player player) {
+		return parseChat(player, "", this.nameFormat);
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -366,9 +417,9 @@ public class mChat extends JavaPlugin {
 		if (bukkitPermission) {
 			for (Entry<String, Object> entry : groupes.entrySet()) {
 			    if (player.hasPermission("mchat.group." + entry.getKey())) {
-			        groups = entry.getValue().toString();
-					if (groups != null && !groups.isEmpty()) {
-						return groups;
+			        group = entry.getValue().toString();
+					if (group != null && !group.isEmpty()) {
+						return group;
 					}
 			        break;
 			    }
@@ -387,7 +438,8 @@ public class mChat extends JavaPlugin {
 	}
 	
 	/*
-	 * End of work initially taken from Drakia's iChat.
+	 * End of work initially taken from Drakia's iChat. 
+	 * (I have added and removed A BUNCH.)
 	 */	
 	
 	private void setupPermissions() {

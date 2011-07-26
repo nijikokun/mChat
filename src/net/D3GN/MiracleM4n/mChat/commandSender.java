@@ -62,48 +62,6 @@ public class commandSender implements CommandExecutor {
 			}
 			return false;
     	}
-		if (label.equalsIgnoreCase("mchannel")) {
-			if(args.length == 1) {
-				if (sender instanceof Player) {
-					Player player = (Player) sender;
-					if(args[0].equalsIgnoreCase("public")) {
-						sender.sendMessage("[" + (pdfFile.getName()) + "]" + " You are now in channel " + "''" + args[0] + "''.");
-						plugin.channelInfo.put(player, "public");
-						return true;
-					} else {
-						if (plugin.bukkitPermission) {
-							if (player.hasPermission("mchat.channel." + args[0])) {
-								plugin.channelInfo.put(player, args[0]);
-								sender.sendMessage("[" + (pdfFile.getName()) + "]" + " You are now in channel " + "''" + args[0] + "''.");
-								return true;
-							} else {
-								sender.sendMessage("[" + (pdfFile.getName()) + "]" + " You are not allowed to join channel "  + "''" + args[0] + "''.");
-								return true;
-							}
-						} else if (plugin.oldPerm) {
-							if(mChat.permissions.has(player, ("mchat.channel." + args[0]))) {
-								plugin.channelInfo.put(player, args[0]);
-								sender.sendMessage("[" + (pdfFile.getName()) + "]" + " You are now in channel " + "''" + args[0] + "''.");
-								return true;
-							} else {
-								sender.sendMessage("[" + (pdfFile.getName()) + "]" + " You are not allowed to join channel "  + "''" + args[0] + "''.");
-								return true;
-							}
-						} else if (player.isOp()) {
-							plugin.channelInfo.put(player, args[0]);
-							sender.sendMessage("[" + (pdfFile.getName()) + "]" + " You are now in channel " + "''" + args[0] + "''.");
-							return true;
-						} else {
-							sender.sendMessage("[" + (pdfFile.getName()) + "]" + " You are not allowed to join channel "  + "''" + args[0] + "''.");
-							return true;
-						}
-					}
-				} else {
-					sender.sendMessage("[" + (pdfFile.getName()) + "]" + " You're a console you can't join channel "  + "''" + args[0] + "''.");
-				}
-			}
-			return false;
-    	}
 		return false;
 	}
 }
