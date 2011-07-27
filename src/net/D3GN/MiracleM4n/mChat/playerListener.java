@@ -39,6 +39,7 @@ public class playerListener extends PlayerListener implements Runnable {
 		String msg = event.getJoinMessage();
 		plugin.playerEvent.put(player, false);
 		plugin.chatt.put(player, false);
+		plugin.contribSP.put(player, false);
 		if (msg == null) return;
 		event.setJoinMessage(plugin.parseChat(player) + " " + plugin.replaceMess(player, "joinMessage"));
 		if (plugin.contrib) {

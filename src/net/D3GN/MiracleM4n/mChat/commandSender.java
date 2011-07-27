@@ -15,7 +15,8 @@ public class commandSender implements CommandExecutor {
 
 	public boolean onCommand (CommandSender sender, Command command, String label, String[] args) {
 		PluginDescriptionFile pdfFile = plugin.getDescription();
-		if (label.equalsIgnoreCase("mchat")) {
+		String commandName = command.getName();
+		if (commandName.equalsIgnoreCase("mchat")) {
 			if(args.length == 0) {
 				return false;
 			}
@@ -25,8 +26,8 @@ public class commandSender implements CommandExecutor {
 						Player player = (Player) sender;
 						if (plugin.bukkitPermission) {
 							 if (player.hasPermission("mchat.reload")) {
-								plugin.checkConfig();
-								plugin.loadConfig();
+								plugin.cListener.checkConfig();
+								plugin.cListener.loadConfig();
 								sender.sendMessage("[" + (pdfFile.getName()) + "]" + " Config Reloaded.");
 								return true;
 							 } else {
@@ -35,8 +36,8 @@ public class commandSender implements CommandExecutor {
 							 }
 						} else if (plugin.oldPerm) {
 							if(mChat.permissions.has(player, ("mchat.reload"))) {
-								plugin.checkConfig();
-								plugin.loadConfig();
+								plugin.cListener.checkConfig();
+								plugin.cListener.loadConfig();
 								sender.sendMessage("[" + (pdfFile.getName()) + "]" + " Config Reloaded.");
 								return true;
 							} else {
@@ -44,8 +45,8 @@ public class commandSender implements CommandExecutor {
 								return true;
 							}
 						} else if (player.isOp()) {
-							plugin.checkConfig();
-							plugin.loadConfig();
+							plugin.cListener.checkConfig();
+							plugin.cListener.loadConfig();
 							sender.sendMessage("[" + (pdfFile.getName()) + "]" + " Config Reloaded.");
 							return true;
 						} else {
@@ -53,15 +54,58 @@ public class commandSender implements CommandExecutor {
 							return true;
 						}
 					} else {
-						plugin.checkConfig();
-						plugin.loadConfig();
+						plugin.cListener.checkConfig();
+						plugin.cListener.loadConfig();
 						plugin.console.sendMessage("[" + (pdfFile.getName()) + "]" + " Config Reloaded.");
 						return true;
 					}
 				}
 			}
 			return false;
-    	}
+    	} else if (commandName.equalsIgnoreCase("mchatme")) {
+            if (args.length > 0) {
+                String message = "";
+                for (int i = 0; i < args.length; ++i) {
+                	message += " " + args[i];
+                }
+                if (sender instanceof Player) {
+                	Player player = (Player) sender;
+                	String senderName = plugin.parseChat(player);
+                	if (plugin.bukkitPermission) {
+                		if (player.hasPermission("mchat.me")) {
+            	            plugin.getServer().broadcastMessage("*" + " " + senderName + message);
+            	            plugin.console.sendMessage("*" + " " + senderName + message);
+            	            return true;
+                		} else {
+                			sender.sendMessage("[" + (pdfFile.getName()) + "]" + " You are not allowed to use /mchatme.");
+                		}
+                	} else if (plugin.oldPerm) {
+                		if (mChat.permissions.has(player, "mchat.me")) {
+            	            plugin.getServer().broadcastMessage("*" + " " + senderName + message);
+            	            plugin.console.sendMessage("*" + " " + senderName + message);
+            	            return true;
+                		} else {
+                			sender.sendMessage("[" + (pdfFile.getName()) + "]" + " You are not allowed to use /mchatme.");
+                		}
+                	} else {
+                		if (player.hasPermission("mchat.me")) {
+            	            plugin.getServer().broadcastMessage("*" + " " + senderName + message);
+            	            plugin.console.sendMessage("*" + " " + senderName + message);
+            	            return true;
+                		} else {
+                			sender.sendMessage("[" + (pdfFile.getName()) + "]" + " You are not allowed to use /mchatme.");
+                		}
+                	}
+    			} else {
+    				String senderName = "Console";
+    	            plugin.getServer().broadcastMessage("*" + " " + senderName + message);
+    	            plugin.console.sendMessage("*" + " " + senderName + message);
+    	            return true;
+    			}
+            } else {
+            	return false;
+            }
+        }
 		return false;
 	}
 }

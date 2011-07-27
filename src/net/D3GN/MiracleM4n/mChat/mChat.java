@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-
 import org.bukkit.craftbukkit.command.ColouredConsoleSender;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.Player;
@@ -18,24 +17,29 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.Configuration;
 import org.bukkitcontrib.BukkitContrib;
+import org.bukkitcontrib.player.ContribPlayer;
 
 import com.nijiko.permissions.PermissionHandler;
 import com.nijikokun.bukkit.Permissions.Permissions;
 
 public class mChat extends JavaPlugin {
 	
-	private playerListener pListener = new playerListener(this);
-	private commandSender cSender = new commandSender(this);
+	playerListener pListener = new playerListener(this);
+	commandSender cSender = new commandSender(this);
+	configListener cListener = new configListener(this);
+	entityListener eListener = new entityListener(this);
 	
 	private PluginManager pm;
 	public static PermissionHandler permissions;
 	ColouredConsoleSender console = null;
-  	Boolean contrib = false;
+	Configuration config;
+	
+  	Boolean healthNotify = false;
+	Boolean contrib = false;
+  	Boolean contribEnabled = true;
   	Boolean permissions3 = false;
   	Boolean bukkitPermission = false;
-  	Boolean hasChanged = false;
   	Boolean oldPerm = false;
-	Configuration config;
 	
 	String chatFormat = "+p+dn+s&f: +message";
 	String nameFormat = "+p+dn+s&e";
@@ -54,6 +58,7 @@ public class mChat extends JavaPlugin {
 	HashMap<String, Object> mchat = new HashMap<String, Object>();
 	HashMap<Player, Boolean> chatt = new HashMap<Player, Boolean>();
 	HashMap<Player, Boolean> playerEvent = new HashMap<Player, Boolean>();
+	HashMap<Player, Boolean> contribSP = new HashMap<Player, Boolean>();
 	
 	public void onEnable() {
 		pm = getServer().getPluginManager();
@@ -61,26 +66,28 @@ public class mChat extends JavaPlugin {
 		console = new ColouredConsoleSender((CraftServer)getServer());
 		PluginDescriptionFile pdfFile = getDescription();
 		
-		getContrib();
-		
 		if (!(new File(getDataFolder(), "config.yml")).exists()) {
-			defaultConfig();
-			checkConfig();
-			loadConfig();
+			cListener.defaultConfig();
+			cListener.checkConfig();
+			cListener.loadConfig();
 		} else {
-			checkConfig();
-			loadConfig();
+			cListener.checkConfig();
+			cListener.loadConfig();
 		}
 		
+		getContrib();
+		
+		pm.registerEvent(Event.Type.ENTITY_DAMAGE, eListener, Priority.High, this);
 		pm.registerEvent(Event.Type.PLAYER_KICK, pListener, Priority.High, this);
 		pm.registerEvent(Event.Type.PLAYER_CHAT, pListener, Priority.High, this);
 		pm.registerEvent(Event.Type.PLAYER_JOIN, pListener, Priority.High, this);
 		pm.registerEvent(Event.Type.PLAYER_QUIT, pListener, Priority.High, this);
 		getCommand("mchat").setExecutor(cSender);
+		getCommand("mchatme").setExecutor(cSender);
 		
 		if (contrib) {
-			customListener cListener = new customListener(this);
-			pm.registerEvent(Event.Type.CUSTOM_EVENT, cListener, Event.Priority.High, this);
+			customListener cusListener = new customListener(this);
+			pm.registerEvent(Event.Type.CUSTOM_EVENT, cusListener, Event.Priority.High, this);
 		}
 		
 		setupPermissions();
@@ -89,10 +96,15 @@ public class mChat extends JavaPlugin {
 				pdfFile.getVersion() + " is enabled!");
 		
 		for (Player players : getServer().getOnlinePlayers()) {
+			contribSP.put(players, false);
+			playerEvent.put(players, false);
+			chatt.put(players, false);
 			if (contrib) {
 				BukkitContrib.getAppearanceManager().setGlobalTitle(players, parseChat(players));
-				playerEvent.put(players, false);
-				chatt.put(players, false);
+				ContribPlayer cplayers = (ContribPlayer) players;
+				if (cplayers.isBukkitContribEnabled()) {
+					contribSP.put(cplayers, true);
+				}
 			}
 		}
 	}
@@ -104,160 +116,6 @@ public class mChat extends JavaPlugin {
 				pdfFile.getVersion() + " is disabled!");
 	}
 	
-	public void loadConfig() {
-		config.load();
-		chatFormat = config.getString("mchat-message-format", chatFormat);
-		nameFormat = config.getString("mchat-name-format", nameFormat);
-		dateFormat = config.getString("mchat-date-format", dateFormat);
-		joinMessage = config.getString("mchat-join-message", joinMessage);
-		leaveMessage = config.getString("mchat-leave-message", leaveMessage);
-		kickMessage	= config.getString("mchat-kick-message", kickMessage);
-		contribChatColour = config.getString("mchat-colouring", contribChatColour);
-
-		if (config.getNode("mchat.prefix") != null) {
-			prefixes.putAll(config.getNode("mchat.prefix").getAll());
-		}
-		
-		if (config.getNode("mchat.suffix") != null) {
-			suffixes.putAll(config.getNode("mchat.suffix").getAll());
-		}
-		
-		if (config.getNode("mchat.group") != null) {
-			groupes.putAll(config.getNode("mchat.group").getAll());
-		}
-	}
-
-	public void defaultConfig() {
-		config.setHeader(
-	            "# mChat configuration file",
-	            "# ",
-				"#           **IMPORTANT**",
-				"#   usage of mchat-message-format is restricted to:",
-				"#       +suffix,+s, +prefix,+p, +group,+g, +world,+w, +time,+t, +name,+n, +dname,+dn, +message,+m",
-				"# ",
-				"#   usage of mchat-name-format is restricted to:",
-				"#       +suffix,+s, +prefix,+p, +group,+g, +world,+w, +time,+t, +name,+n, +dname,+dn",
-				"#           **************",
-	            "# ",
-	            "# Use of mchat: is only if your using PermissionsBukkit (superperms)",
-	            "# ignore it if you don't know what that is.",
-	            "");
-		groupes.put("admin", "");
-		groupes.put("sadmin", "");
-		groupes.put("jadmin", "");
-		groupes.put("member", "");
-		prefixes.put("admin", "&4DtK [SO] &7");
-		prefixes.put("sadmin", "&9DtK [SA] &7");
-		prefixes.put("jadmin", "&aDtK [JA] &7");
-		prefixes.put("member", "&cDtK [M] &7");
-		suffixes.put("admin", "");
-		suffixes.put("sadmin", "");
-		suffixes.put("jadmin", "");
-		suffixes.put("member", "");
-		mchat.put("group", groupes);
-		mchat.put("prefix", prefixes);
-		mchat.put("suffix", suffixes);
-		config.setProperty("mchat-date-format", dateFormat);
-		config.setProperty("mchat-message-format", chatFormat);
-		config.setProperty("mchat-name-format", nameFormat);
-		config.setProperty("mchat-join-message", joinMessage);
-		config.setProperty("mchat-leave-message", leaveMessage);
-		config.setProperty("mchat-kick-message", kickMessage);
-		config.setProperty("mchat", mchat);
-		config.setProperty("mchat-colouring", contribChatColour);
-		config.setProperty("auto-Changed", 1);
-		config.save();
-	}
-	
-	public void checkConfig() {
-		PluginDescriptionFile pdfFile = getDescription();
-		Configuration config = new Configuration(new File(getDataFolder(), "config.yml"));
-		config.load();
-		if (config.getProperty("auto-Changed") == null) {
-			config.setProperty("auto-Changed", 1);
-		}
-		
-		if (config.getInt("auto-Changed", 1) == 1) {
-			if (config.getProperty("mchat-date-format") == null) {
-				config.setProperty("mchat-date-format", dateFormat);
-				hasChanged = true;
-			}
-			
-			if (config.getProperty("mchat-message-format") == null) {
-				config.setProperty("mchat-message-format", chatFormat);
-				hasChanged = true;
-			}
-			
-			if (config.getProperty("mchat-name-format") == null) {
-				config.setProperty("mchat-name-format", nameFormat);
-				hasChanged = true;
-			}
-			
-			if (config.getProperty("mchat-join-message") == null) {
-				config.setProperty("mchat-join-message", joinMessage);
-				hasChanged = true;
-			}
-			
-			if (config.getProperty("mchat-leave-message") == null) {
-				config.setProperty("mchat-leave-message", leaveMessage);
-				hasChanged = true;
-			}
-			
-			if (config.getProperty("mchat-kick-message") == null) {
-				config.setProperty("mchat-kick-message", kickMessage);
-				hasChanged = true;
-			}
-			
-			if (config.getProperty("mchat-colouring") == null) {
-				config.setProperty("mchat-colouring", contribChatColour);
-				hasChanged = true;
-			}
-			
-			if (config.getProperty("mchat") == null) {
-				groupes.put("admin", "");
-				groupes.put("sadmin", "");
-				groupes.put("jadmin", "");
-				groupes.put("member", "");
-				prefixes.put("admin", "&4DtK [SO] &7");
-				prefixes.put("sadmin", "&9DtK [SA] &7");
-				prefixes.put("jadmin", "&aDtK [JA] &7");
-				prefixes.put("member", "&cDtK [M] &7");
-				suffixes.put("admin", "");
-				suffixes.put("sadmin", "");
-				suffixes.put("jadmin", "");
-				suffixes.put("member", "");
-				mchat.put("group", groupes);
-				mchat.put("prefix", prefixes);
-				mchat.put("suffix", suffixes);
-				config.setProperty("mchat", mchat);
-				hasChanged = true;
-			}
-		}
-		if (!(config.getInt("auto-Changed", 1) == 1)) {
-			hasChanged = true;
-			config.setProperty("auto-Changed", 1);
-		}
-		
-		if (hasChanged) {
-			config.setHeader(
-		            "# mChat configuration file",
-		            "# ",
-					"#           **IMPORTANT**",
-					"#   usage of mchat-message-format is restricted to:",
-					"#       +suffix,+s, +prefix,+p, +group,+g, +world,+w, +time,+t, +name,+n, +dname,+dn, +message,+m,+msg",
-					"# ",
-					"#   usage of mchat-name-format is restricted to:",
-					"#       +suffix,+s, +prefix,+p, +group,+g, +world,+w, +time,+t, +name,+n, +dname,+dn",
-					"#           **************",
-		            "# ",
-		            "# Use of mchat: is only if your using PermissionsBukkit (superperms)",
-		            "# ignore it if you don't know what that is.",
-		            "");
-			System.out.println("[" + pdfFile.getName() + "]" + " config.yml has been updated.");
-			config.save();
-		}
-	}
-	
 	public String replaceMess(Player player, String string) {
 		if (string == "joinMessage") {
 			string = joinMessage;
@@ -267,7 +125,7 @@ public class mChat extends JavaPlugin {
 			string = leaveMessage;
 		}
 		return string.replaceAll("(&([A-Fa-f0-9]))", "\u00A7$2");
-	}	
+	}
 	
 	/*
 	 * Beginning of work initially taken from Drakia's iChat.
@@ -297,6 +155,8 @@ public class mChat extends JavaPlugin {
 		if (prefix == null) prefix = "";
 		if (suffix == null) suffix = "";
 		if (group == null) group = "";
+		String healthbar = healthBar(player);
+		String health = String.valueOf(player.getHealth());
 		String world = player.getWorld().getName();
 		Date now = new Date();
 		SimpleDateFormat dateFormat = new SimpleDateFormat(this.dateFormat);
@@ -305,13 +165,13 @@ public class mChat extends JavaPlugin {
 		String[] search;
 		String[] replace;
 		if (msg == "") {
-			search = new String[] {"+suffix,+s", "+prefix,+p", "+group,+g", "+world,+w", "+time,+t", "+name,+n", "+dname,+dn"};
-			replace = new String[] { suffix, prefix, group, world, time, player.getName(), player.getDisplayName() };
+			search = new String[] {"+suffix,+s", "+prefix,+p", "+group,+g", "+world,+w", "+time,+t", "+name,+n", "+dname,+dn", "+healthbar,+hb", "+health,+h"};
+			replace = new String[] { suffix, prefix, group, world, time, player.getName(), player.getDisplayName(), healthbar, health };
 		} else {
 			msg = msg.replaceAll("%", "%%");
 			if (format == null) return msg;
-			search = new String[] {"+suffix,+s", "+prefix,+p", "+group,+g", "+world,+w", "+time,+t", "+name,+n", "+dname,+dn", "+message,+m,+msg"};
-			replace = new String[] { suffix, prefix, group, world, time, player.getName(), player.getDisplayName(), msg };
+			search = new String[] {"+suffix,+s", "+prefix,+p", "+group,+g", "+world,+w", "+time,+t", "+name,+n", "+dname,+dn", "+healthbar,+hb", "+health,+h", "+message,+msg,+m"};
+			replace = new String[] { suffix, prefix, group, world, time, player.getName(), player.getDisplayName(), healthbar, health, msg };
 		}
 		return replaceVars(format, search, replace);
 	}
@@ -326,6 +186,25 @@ public class mChat extends JavaPlugin {
 	
 	public String parseChat(Player player) {
 		return parseChat(player, "", this.nameFormat);
+	}
+	
+	public String healthBar(Player player) {
+		float maxHealth = 20;
+		float barLength = 10;
+		float health = player.getHealth();
+		int fill = Math.round( (health / maxHealth) * barLength );
+		String barColor = "&2";
+		if (fill <= 4) barColor = "&4";
+		else if (fill <= 7) barColor = "&e";
+		else barColor = "&2";
+		StringBuilder out = new StringBuilder();
+		out.append(barColor);
+		for (int i = 0; i < barLength; i++) {
+			if (i == fill) out.append("&8");
+			out.append("|");
+		}
+		out.append("&f");
+		return out.toString();
 	}
 	
 	@SuppressWarnings("deprecation")
@@ -455,22 +334,29 @@ public class mChat extends JavaPlugin {
 				permissions = ((Permissions)permTest).getHandler();
 				permissions3 = permTest.getDescription().getVersion().startsWith("3");
 				console.sendMessage("[" + (pdfFile.getName()) + "]" + " Permissions "  + (permTest.getDescription().getVersion()) + " found hooking in.");
-			} 
+			} else {
+				bukkitPermission = true;
+				console.sendMessage("[" + (pdfFile.getName()) + "]" + " Permissions plugin not found, Defaulting to Bukkit Methods.");
+			}
 		} else {
 			bukkitPermission = true;
 			console.sendMessage("[" + (pdfFile.getName()) + "]" + " Permissions plugin not found, Defaulting to Bukkit Methods.");
 		}
 	}
 	
-	public void getContrib(){
+	public void getContrib() {
 		PluginDescriptionFile pdfFile = getDescription();
 		Plugin contibTest = this.getServer().getPluginManager().getPlugin("BukkitContrib");
-		if(contibTest != null){
-			this.contrib = true;
-			console.sendMessage("[" + (pdfFile.getName()) + "]" + " BukkitContrib found now using.");
-		}
-		else {
-			this.contrib = false;
+		if(contibTest != null) {
+			if (contribEnabled) {
+				contrib = true;
+				console.sendMessage("[" + (pdfFile.getName()) + "]" + " BukkitContrib found now using.");
+			} else {
+				contrib = false;
+				console.sendMessage("[" + (pdfFile.getName()) + "]" + " BukkitContrib features disabled by config.");
+			}
+		} else {
+			contrib = false;
 			console.sendMessage("[" + (pdfFile.getName()) + "]" + " BukkitContrib not found not using.");
 		}
 	}
