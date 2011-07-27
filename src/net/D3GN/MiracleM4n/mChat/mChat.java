@@ -17,7 +17,6 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.Configuration;
 import org.bukkitcontrib.BukkitContrib;
-import org.bukkitcontrib.player.ContribPlayer;
 
 import com.nijiko.permissions.PermissionHandler;
 import com.nijikokun.bukkit.Permissions.Permissions;
@@ -37,6 +36,7 @@ public class mChat extends JavaPlugin {
   	Boolean healthNotify = false;
 	Boolean contrib = false;
   	Boolean contribEnabled = true;
+  	Boolean contribPM = false;
   	Boolean permissions3 = false;
   	Boolean bukkitPermission = false;
   	Boolean oldPerm = false;
@@ -58,7 +58,6 @@ public class mChat extends JavaPlugin {
 	HashMap<String, Object> mchat = new HashMap<String, Object>();
 	HashMap<Player, Boolean> chatt = new HashMap<Player, Boolean>();
 	HashMap<Player, Boolean> playerEvent = new HashMap<Player, Boolean>();
-	HashMap<Player, Boolean> contribSP = new HashMap<Player, Boolean>();
 	
 	public void onEnable() {
 		pm = getServer().getPluginManager();
@@ -96,15 +95,10 @@ public class mChat extends JavaPlugin {
 				pdfFile.getVersion() + " is enabled!");
 		
 		for (Player players : getServer().getOnlinePlayers()) {
-			contribSP.put(players, false);
 			playerEvent.put(players, false);
 			chatt.put(players, false);
 			if (contrib) {
 				BukkitContrib.getAppearanceManager().setGlobalTitle(players, parseChat(players));
-				ContribPlayer cplayers = (ContribPlayer) players;
-				if (cplayers.isBukkitContribEnabled()) {
-					contribSP.put(cplayers, true);
-				}
 			}
 		}
 	}
@@ -117,11 +111,11 @@ public class mChat extends JavaPlugin {
 	}
 	
 	public String replaceMess(Player player, String string) {
-		if (string == "joinMessage") {
+		if (string.equals("joinMessage")) {
 			string = joinMessage;
-		} else if (string == "kickMessage") {
+		} else if (string.equals("kickMessage")) {
 			string = kickMessage;
-		} else if (string == "leaveMessage") {
+		} else if (string.equals("leaveMessage")) {
 			string = leaveMessage;
 		}
 		return string.replaceAll("(&([A-Fa-f0-9]))", "\u00A7$2");
@@ -350,7 +344,7 @@ public class mChat extends JavaPlugin {
 		if(contibTest != null) {
 			if (contribEnabled) {
 				contrib = true;
-				console.sendMessage("[" + (pdfFile.getName()) + "]" + " BukkitContrib found now using.");
+				console.sendMessage("[" + (pdfFile.getName()) + "]" + " BukkitContrib " + (contibTest.getDescription().getVersion()) + " found now using.");
 			} else {
 				contrib = false;
 				console.sendMessage("[" + (pdfFile.getName()) + "]" + " BukkitContrib features disabled by config.");

@@ -1,6 +1,6 @@
 name: mChat
 main: net.D3GN.MiracleM4n.mChat.mChat
-version: 1.7.6_1
+version: 1.7.7_1
 author: MiracleM4n
 website: http://d3gn.net/
 description: Simple..Not really... Chat modifying plugin.
@@ -11,6 +11,7 @@ commands:
             /<command> reload
             Example: /<command> - See this info.
             Example: /<command> reload - Reload Config.
+            Example: /<command> pm {player} *Message* - Sends PM to player.
     mchatme:
         description: 
         usage: |

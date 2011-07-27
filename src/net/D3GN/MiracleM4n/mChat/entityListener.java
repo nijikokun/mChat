@@ -18,20 +18,10 @@ public class entityListener extends EntityListener implements Runnable {
 	Boolean messageTimeout = true;
 	
 	public void onEntityDamage(EntityDamageEvent event) {
+		if (event.isCancelled()) return;
 		if (plugin.healthNotify) {
 			if (event.getEntity() instanceof Player) {
 				final Player player = (Player) event.getEntity();
-				for (Player players : plugin.getServer().getOnlinePlayers()) {
-					if (plugin.contrib) {
-						if (plugin.contribSP.get(players) == false) {
-							ContribPlayer cplayers = (ContribPlayer) players;
-							if (cplayers.isBukkitContribEnabled()) {
-								plugin.contribSP.put(cplayers, true);
-							}
-						}
-					}
-					break;
-				}
 				Runnable timeRunnable = new Runnable() { 
 					public void run() {
 						messageTimeout = true;
@@ -45,28 +35,36 @@ public class entityListener extends EntityListener implements Runnable {
 				if (messageTimeout) {
 					for (Player players : plugin.getServer().getOnlinePlayers()) {
 						if (players != player) {
-							if (plugin.contribSP.get(players)) {
+							if (plugin.contrib) {
 								ContribPlayer cplayers = (ContribPlayer) players;
-								cplayers.sendNotification(healthBarDamage(player, event.getDamage()), player.getName(), Material.LAVA);	
+								if(player.getName().length() > 25) {
+									if ((player.getHealth() - event.getDamage()) < 1) {
+										players.sendMessage(healthBarDamage(player, event.getDamage()) + " " + plugin.parseChat(player) + " has died!");
+									} else {
+										players.sendMessage(healthBarDamage(player, event.getDamage()) + " " + plugin.parseChat(player) + " has lost health! " + (player.getHealth() - event.getDamage()) + " health left.");
+									}
+								} else {
+									cplayers.sendNotification(healthBarDamage(player, event.getDamage()), player.getName(), Material.LAVA);	
+								}
 							} else {
-								if ((player.getHealth() - event.getDamage()) < 0) {
-									players.sendMessage(healthBarDamage(player, event.getDamage()) + " " + plugin.parseChat(player) + " has lost health, and died!");
+								if ((player.getHealth() - event.getDamage()) < 1) {
+									players.sendMessage(healthBarDamage(player, event.getDamage()) + " " + plugin.parseChat(player) + " has died!");
 								} else {
 									players.sendMessage(healthBarDamage(player, event.getDamage()) + " " + plugin.parseChat(player) + " has lost health! " + (player.getHealth() - event.getDamage()) + " health left.");
 								}
 							}
 						}
 					}
-					if (plugin.contribSP.get(player)) {
+					if (plugin.contrib) {
 						ContribPlayer cplayer = (ContribPlayer) player;
-						if ((player.getHealth() - event.getDamage()) < 0) {
+						if ((player.getHealth() - event.getDamage()) < 1) {
 							cplayer.sendNotification(healthBarDamage(player, event.getDamage()), "You have died!", Material.LAVA);
 						} else {
 							cplayer.sendNotification(healthBarDamage(player, event.getDamage()), "You have " + (player.getHealth() - event.getDamage()) + " health left.", Material.LAVA);
 						}
 					} else {
-						if ((player.getHealth() - event.getDamage()) < 0) {
-							player.sendMessage(healthBarDamage(player, event.getDamage()) + " You have lost health, and died!");
+						if ((player.getHealth() - event.getDamage()) < 1) {
+							player.sendMessage(healthBarDamage(player, event.getDamage()) + " You have died!");
 						} else {
 							player.sendMessage(healthBarDamage(player, event.getDamage()) + " You have lost health! You have " + (player.getHealth() - event.getDamage()) + " health left.");
 						}

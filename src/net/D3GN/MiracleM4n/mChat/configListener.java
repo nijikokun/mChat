@@ -26,6 +26,7 @@ public class configListener {
 		plugin.contribChatColour = config.getString("mchat-colouring", plugin.contribChatColour);
 		plugin.contribEnabled = config.getBoolean("mchat-contrib-enabled", plugin.contribEnabled);
 		plugin.healthNotify = config.getBoolean("mchat-notifyHealth-enabled", plugin.healthNotify);
+		plugin.contribPM = config.getBoolean("mchat-contrib-PMBox", plugin.contribPM);
 
 		if (config.getNode("mchat.prefix") != null) {
 			plugin.prefixes.putAll(config.getNode("mchat.prefix").getAll());
@@ -81,6 +82,7 @@ public class configListener {
 		config.setProperty("mchat-colouring", plugin.contribChatColour);
 		config.setProperty("mchat-contrib-enabled", plugin.contribEnabled);
 		config.setProperty("mchat-notifyHealth-enabled", plugin.healthNotify);
+		config.setProperty("mchat-contrib-PMBox", plugin.contribPM);
 		config.setProperty("auto-Changed", 1);
 		config.save();
 	}
@@ -136,6 +138,11 @@ public class configListener {
 			
 			if (config.getProperty("mchat-notifyHealth-enabled") == null) {
 				config.setProperty("mchat-notifyHealth-enabled", plugin.healthNotify);
+				hasChanged = true;
+			}
+			
+			if (config.getProperty("mchat-contrib-PMBox") == null) {
+				config.setProperty("mchat-contrib-PMBox", plugin.contribPM);
 				hasChanged = true;
 			}
 
