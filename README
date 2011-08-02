@@ -1,8 +1,10 @@
 name: mChat
 main: net.D3GN.MiracleM4n.mChat.mChat
-version: 1.7.7_1
+version: 1.7.9
 author: MiracleM4n
 website: http://d3gn.net/
+thread: http://forums.bukkit.org/threads/22958/
+softdepend: [Spout]
 description: Simple..Not really... Chat modifying plugin.
 commands:
     mchat:
@@ -11,12 +13,24 @@ commands:
             /<command> reload
             Example: /<command> - See this info.
             Example: /<command> reload - Reload Config.
-            Example: /<command> pm {player} *Message* - Sends PM to player.
     mchatme:
         description: 
         usage: |
             /<command> *Message*
             Example: /<command> - See this info.
             Example: /<command> *Message* - Displays message.
-        aliases: { me }
+        aliases: [me]
+    mchatwho:
+        description: 
+        usage: |
+            /<command> *PLAYER*
+            Example: /<command> - See this info.
+            Example: /<command> *PLAYER* - Displays info about player.
+        aliases: [who, mwho]
+    mchatafk:
+        description: 
+        usage: |
+            /<command>
+            Example: /<command> - Displays you as AFK.
+        aliases: [afk, mafk]
             
