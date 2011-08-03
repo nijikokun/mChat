@@ -4,7 +4,7 @@ version: 1.7.9
 author: MiracleM4n
 website: http://d3gn.net/
 thread: http://forums.bukkit.org/threads/22958/
-softdepend: [Spout]
+softdepend: [Spout, mInfo]
 commands:
     mchat:
         description: 

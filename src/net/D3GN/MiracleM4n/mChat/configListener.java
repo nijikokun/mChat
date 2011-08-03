@@ -24,10 +24,6 @@ public class configListener {
 		plugin.joinMessage = config.getString("mchat-join-message", plugin.joinMessage);
 		plugin.leaveMessage = config.getString("mchat-leave-message", plugin.leaveMessage);
 		plugin.kickMessage	= config.getString("mchat-kick-message", plugin.kickMessage);
-		plugin.spoutChatColour = config.getString("mchat-colouring", plugin.spoutChatColour);
-		plugin.typingMessage = config.getString("mchat-typingMessage", plugin.typingMessage);
-		plugin.spoutEnabled = config.getBoolean("mchat-spout-enabled", plugin.spoutEnabled);
-		plugin.healthNotify = config.getBoolean("mchat-notifyHealth-enabled", plugin.healthNotify);
 	}
 
 	public void defaultConfig() {
@@ -54,10 +50,6 @@ public class configListener {
 		config.setProperty("mchat-join-message", plugin.joinMessage);
 		config.setProperty("mchat-leave-message", plugin.leaveMessage);
 		config.setProperty("mchat-kick-message", plugin.kickMessage);
-		config.setProperty("mchat-colouring", plugin.spoutChatColour);
-		config.setProperty("mchat-spout-enabled", plugin.spoutEnabled);
-		config.setProperty("mchat-notifyHealth-enabled", plugin.healthNotify);
-		config.setProperty("mchat-typingMessage", plugin.typingMessage);
 		config.setProperty("auto-Changed", 1);
 		config.save();
 	}
@@ -105,38 +97,9 @@ public class configListener {
 				config.setProperty("mchat-kick-message", plugin.kickMessage);
 				hasChanged = true;
 			}
-			
-			if (config.getProperty("mchat-colouring") == null) {
-				config.setProperty("mchat-colouring", plugin.spoutChatColour);
-				hasChanged = true;
-			}
-			
-			if (config.getProperty("mchat-spout-enabled") == null) {
-				config.setProperty("mchat-spout-enabled", plugin.spoutEnabled);
-				hasChanged = true;
-			}
-			
-			if (config.getProperty("mchat-notifyHealth-enabled") == null) {
-				config.setProperty("mchat-notifyHealth-enabled", plugin.healthNotify);
-				hasChanged = true;
-			}
-			
-			if (config.getProperty("mchat-typingMessage") == null) {
-				config.setProperty("mchat-typingMessage", plugin.typingMessage);
-				hasChanged = true;
-			}
 		}
 		if (!(config.getInt("auto-Changed", 1) == 1)) {
 			hasChanged = true;
-			if (config.getProperty("mchat-contrib-PMBox") != null) {
-				config.removeProperty("mchat-contrib-PMBox");
-			}
-			if (config.getProperty("mchat-contrib-enabled") != null) {
-				config.removeProperty("mchat-contrib-enabled");
-			}
-			if (config.getProperty("mchat") != null) {
-				config.removeProperty("mchat");
-			}
 			config.setProperty("auto-Changed", 1);
 		}
 		
@@ -155,7 +118,7 @@ public class configListener {
 		            "# Use of mchat: is only if your using PermissionsBukkit (superperms)",
 		            "# ignore it if you don't know what that is.",
 		            "");
-			System.out.println("[" + pdfFile.getName() + "]" + " config.yml has been updated.");
+			plugin.console.sendMessage("[" + pdfFile.getName() + "]" + " config.yml has been updated.");
 			config.save();
 		}
 	}

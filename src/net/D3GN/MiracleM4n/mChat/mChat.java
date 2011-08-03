@@ -3,11 +3,10 @@ package net.D3GN.MiracleM4n.mChat;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 
+//import net.D3GN.MiracleM4n.mInfo.PlayerInfo;
 import net.D3GN.MiracleM4n.mInfo.mInfo;
 
-import org.bukkit.Location;
 import org.bukkit.craftbukkit.command.ColouredConsoleSender;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.Player;
@@ -18,27 +17,22 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.Configuration;
-import org.getspout.spoutapi.SpoutManager;
 
 public class mChat extends JavaPlugin {
 	
 	playerListener pListener = new playerListener(this);
 	commandSender cSender = new commandSender(this);
 	configListener cListener = new configListener(this);
-	entityListener eListener = new entityListener(this);
 	
 	private PluginManager pm;
-	
 	public static mChat API = null;
+	//public PlayerInfo IService;
+	
 	ColouredConsoleSender console = null;
 	Configuration config = null;
 	
-  	Boolean spoutEnabled = true;
-  	Boolean healthNotify = false;
-	Boolean spout = false;
 	Boolean mInfoB = false;
 	
-  	String typingMessage = "*Typing*";
 	String chatFormat = "+hb+p+dn+s&f: +message";
 	String nameFormat = "+p+dn+s&e";
 	String joinFormat = "+p+dn+s&e";
@@ -46,11 +40,6 @@ public class mChat extends JavaPlugin {
 	String joinMessage = "has joined the game.";
 	String leaveMessage = "has left the game.";
 	String kickMessage = "has been kicked from the game.";
-	String spoutChatColour = "dark_red";
-
-	HashMap<Player, Boolean> chatt = new HashMap<Player, Boolean>();
-	HashMap<Player, Boolean> isAFK = new HashMap<Player, Boolean>();
-	HashMap<Player, Location> AFKLoc = new HashMap<Player, Location>();
 
 	public void onEnable() {
 		pm = getServer().getPluginManager();
@@ -66,38 +55,28 @@ public class mChat extends JavaPlugin {
 			cListener.checkConfig();
 			cListener.loadConfig();
 		}
-		
-		getSpout();
-		getmInfo();
-		setupPermissions();
-		
-		pm.registerEvent(Event.Type.ENTITY_DAMAGE, eListener, Priority.High, this);
+
 		pm.registerEvent(Event.Type.PLAYER_KICK, pListener, Priority.High, this);
 		pm.registerEvent(Event.Type.PLAYER_CHAT, pListener, Priority.High, this);
 		pm.registerEvent(Event.Type.PLAYER_JOIN, pListener, Priority.High, this);
 		pm.registerEvent(Event.Type.PLAYER_QUIT, pListener, Priority.High, this);
-		pm.registerEvent(Event.Type.PLAYER_MOVE, pListener, Priority.High, this);
 		getCommand("mchat").setExecutor(cSender);
-		getCommand("mchatme").setExecutor(cSender);
-		getCommand("mchatwho").setExecutor(cSender);
-		getCommand("mchatafk").setExecutor(cSender);
-		
-		if (spout) {
-			customListener cusListener = new customListener(this);
-			pm.registerEvent(Event.Type.CUSTOM_EVENT, cusListener, Event.Priority.High, this);
-		}
 		
 		mChat.API = this;
 		
-		console.sendMessage("[" + (pdfFile.getName()) + "]" + " version " + 
-				pdfFile.getVersion() + " is enabled!");
-		
-		for (Player players : getServer().getOnlinePlayers()) {
-			isAFK.put(players, false);
-			chatt.put(players, false);
-			if (spout) {	
-				SpoutManager.getAppearanceManager().setGlobalTitle(players, parseName(players));
-			}
+		getmInfo();
+		/*
+		try {
+			IService = getServer().getServicesManager().load(PlayerInfo.class);
+		} catch (java.lang.NoClassDefFoundError error) {
+			mInfoB = false;
+			console.sendMessage("[" + (pdfFile.getName()) + "]" + " mInfo not found shutting down.");
+			pm.disablePlugin(this);
+		} 
+		*/
+		if (mInfoB) {
+			console.sendMessage("[" + (pdfFile.getName()) + "]" + " version " + 
+					pdfFile.getVersion() + " is enabled!");
 		}
 	}
 	
@@ -133,9 +112,9 @@ public class mChat extends JavaPlugin {
 	}
 	
 	public String parseChat(Player player, String msg, String formatAll) {
-		String prefix = mInfo.API.getRawPrefix(player);
-		String suffix = mInfo.API.getRawSuffix(player);
-		String group = mInfo.API.getRawGroup(player);
+		String prefix = mInfo.API.getPrefix(player);
+		String suffix = mInfo.API.getSuffix(player);
+		String group = mInfo.API.getGroup(player);
 		if (prefix == null) prefix = "";
 		if (suffix == null) suffix = "";
 		if (group == null) group = "";
@@ -202,34 +181,7 @@ public class mChat extends JavaPlugin {
 	public String parseJoin(Player player) {
 		return parseChat(player, "", this.joinFormat);
 	}
-	
-	private void setupPermissions() {
-		PluginDescriptionFile pdfFile = getDescription();
-		Plugin bukkitPermTest = this.getServer().getPluginManager().getPlugin("PermissionsBukkit");
-		if (bukkitPermTest != null) {
-			console.sendMessage("[" + (pdfFile.getName()) + "]" + " PermissionsBukkit " + (bukkitPermTest.getDescription().getVersion()) + " found hooking in.");
-		} else {
-			console.sendMessage("[" + (pdfFile.getName()) + "]" + " Permissions plugin not found, Defaulting to Bukkit Methods.");
-		}
-	}
-	
-	public void getSpout() {
-		PluginDescriptionFile pdfFile = getDescription();
-		Plugin spoutTest = this.getServer().getPluginManager().getPlugin("Spout");
-		if(spoutTest != null) {
-			if (spoutEnabled) {
-				spout = true;
-				console.sendMessage("[" + (pdfFile.getName()) + "]" + " Spout " + (spoutTest.getDescription().getVersion()) + " found now using.");
-			} else {
-				spout = false;
-				console.sendMessage("[" + (pdfFile.getName()) + "]" + " Spout features disabled by config.");
-			}
-		} else {
-			spout = false;
-			console.sendMessage("[" + (pdfFile.getName()) + "]" + " Spout not found not using.");
-		}
-	}
-	
+
 	public void getmInfo() {
 		PluginDescriptionFile pdfFile = getDescription();
 		Plugin mInfoTest = this.getServer().getPluginManager().getPlugin("mInfo");
