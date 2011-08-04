@@ -112,9 +112,9 @@ public class mChat extends JavaPlugin {
 	}
 	
 	public String parseChat(Player player, String msg, String formatAll) {
-		String prefix = mInfo.API.getPrefix(player);
-		String suffix = mInfo.API.getSuffix(player);
-		String group = mInfo.API.getGroup(player);
+		String prefix = mInfo.API.getRawPrefix(player);
+		String suffix = mInfo.API.getRawSuffix(player);
+		String group = mInfo.API.getRawGroup(player);
 		if (prefix == null) prefix = "";
 		if (suffix == null) suffix = "";
 		if (group == null) group = "";
