@@ -7,6 +7,7 @@ import java.util.Date;
 //import net.D3GN.MiracleM4n.mInfo.PlayerInfo;
 import net.D3GN.MiracleM4n.mInfo.mInfo;
 
+import org.anjocaido.groupmanager.permissions.AnjoPermissionsHandler;
 import org.bukkit.craftbukkit.command.ColouredConsoleSender;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.entity.Player;
@@ -18,6 +19,9 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.Configuration;
 
+import com.nijiko.permissions.PermissionHandler;
+import com.nijikokun.bukkit.Permissions.Permissions;
+
 public class mChat extends JavaPlugin {
 	
 	playerListener pListener = new playerListener(this);
@@ -27,6 +31,12 @@ public class mChat extends JavaPlugin {
 	private PluginManager pm;
 	public static mChat API = null;
 	//public PlayerInfo IService;
+	
+	public static PermissionHandler permissions;
+	Boolean permissionsB = false;
+	
+	public static AnjoPermissionsHandler gmPermissions;
+	Boolean gmPermissionsB = false;
 	
 	ColouredConsoleSender console = null;
 	Configuration config = null;
@@ -65,6 +75,8 @@ public class mChat extends JavaPlugin {
 		mChat.API = this;
 		
 		getmInfo();
+		setupUselessPermissions();
+		setupUselessGroupManager();
 		/*
 		try {
 			IService = getServer().getServicesManager().load(PlayerInfo.class);
@@ -174,6 +186,23 @@ public class mChat extends JavaPlugin {
 	 * (I have added and removed A BUNCH.)
 	 */	
 	
+	public Boolean checkPermissions(Player player, String node) {
+		if (permissionsB) {
+			if (mChat.permissions.has(player, node)) {
+				return true;
+			}
+		} else if (gmPermissionsB) {
+			if (mChat.gmPermissions.has(player, node)) {
+				return true;
+			}
+		} else {
+			if (player.hasPermission(node)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	public String parseName(Player player) {
 		return parseChat(player, "", this.nameFormat);
 	}
@@ -192,6 +221,33 @@ public class mChat extends JavaPlugin {
 			mInfoB = false;
 			console.sendMessage("[" + (pdfFile.getName()) + "]" + " mInfo not found shutting down.");
 			pm.disablePlugin(this);
+		}
+	}
+	
+	private void setupUselessPermissions() {
+		Plugin permTest = this.getServer().getPluginManager().getPlugin("Permissions");
+		PluginDescriptionFile pdfFile = getDescription();		
+		if (permissions == null) {
+			if (permTest != null) {
+				permissions = ((Permissions)permTest).getHandler();
+				permissionsB = true;
+				System.out.println("[" + pdfFile.getName() + "]" + " Old-OutDated Permissions " + (permTest.getDescription().getVersion()) + " found hooking in.");
+			} else {
+				System.out.println("[" + pdfFile.getName() + "]" + " Failmissions not found using the right Permissions.");
+			}
+		}
+	}
+	
+	private void setupUselessGroupManager() {
+		Plugin permTest = this.getServer().getPluginManager().getPlugin("GroupManager");
+		PluginDescriptionFile pdfFile = getDescription();		
+		if (permissions == null) {
+			if (permTest != null) {
+				gmPermissionsB = true;
+				System.out.println("[" + pdfFile.getName() + "]" + " Old-OutDated GroupManager " + (permTest.getDescription().getVersion()) + " found hooking in.");
+			} else {
+				System.out.println("[" + pdfFile.getName() + "]" + " FailManager not found, using the right Permissions.");
+			}
 		}
 	}
 }

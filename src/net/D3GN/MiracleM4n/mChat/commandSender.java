@@ -23,7 +23,7 @@ public class commandSender implements CommandExecutor {
 				if(args[0].equalsIgnoreCase("reload")) {
 					if (sender instanceof Player) {
 						Player player = (Player) sender;
-						 if (player.hasPermission("mchat.reload")) {
+						if (plugin.checkPermissions(player, "mchat.reload")) {
 							plugin.cListener.checkConfig();
 							plugin.cListener.loadConfig();
 							sender.sendMessage(formatMessage("Config Reloaded."));
