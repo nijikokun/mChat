@@ -5,16 +5,16 @@ import java.io.File;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.util.config.Configuration;
 
-public class configListener {
+public class MConfigListener {
 	mChat plugin;
 	
-	public configListener(mChat plugin) {
+	public MConfigListener(mChat plugin) {
 		this.plugin = plugin;
 	}
 	
   	Boolean hasChanged = false;
 	
-	public void loadConfig() {
+  	protected void loadConfig() {
 		Configuration config = plugin.config;
 		config.load();
 		plugin.chatFormat = config.getString("mchat-message-format", plugin.chatFormat);
@@ -26,7 +26,7 @@ public class configListener {
 		plugin.kickMessage	= config.getString("mchat-kick-message", plugin.kickMessage);
 	}
 
-	public void defaultConfig() {
+	protected void defaultConfig() {
 		Configuration config = new Configuration(new File(plugin.getDataFolder(), "config.yml"));
 		config.save();
 		config.setHeader(
@@ -54,7 +54,7 @@ public class configListener {
 		config.save();
 	}
 	
-	public void checkConfig() {
+	protected void checkConfig() {
 		Configuration config = plugin.config;
 		PluginDescriptionFile pdfFile = plugin.getDescription();
 		config.load();
@@ -123,3 +123,4 @@ public class configListener {
 		}
 	}
 }
+

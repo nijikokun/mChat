@@ -6,10 +6,11 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
 
-public class commandSender implements CommandExecutor {
+public class MCommandSender implements CommandExecutor {
 	mChat plugin;
+	mChatAPI mAPI;
 	
-	public commandSender(mChat plugin) {
+	public MCommandSender(mChat plugin) {
 		this.plugin = plugin;
 	}
 	
@@ -23,7 +24,7 @@ public class commandSender implements CommandExecutor {
 				if(args[0].equalsIgnoreCase("reload")) {
 					if (sender instanceof Player) {
 						Player player = (Player) sender;
-						if (plugin.checkPermissions(player, "mchat.reload")) {
+						if (mAPI.checkPermissions(player, "mchat.reload")) {
 							plugin.cListener.checkConfig();
 							plugin.cListener.loadConfig();
 							sender.sendMessage(formatMessage("Config Reloaded."));
@@ -44,8 +45,9 @@ public class commandSender implements CommandExecutor {
 		return false;
 	}
 	
-	public String formatMessage(String message) {
+	private String formatMessage(String message) {
 		PluginDescriptionFile pdfFile = plugin.getDescription();
-		return(plugin.addColour("&4[" + (pdfFile.getName()) + "] " + message));
+		return(mAPI.addColour("&4[" + (pdfFile.getName()) + "] " + message));
 	}
 }
+

@@ -7,10 +7,11 @@ import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-public class playerListener extends PlayerListener implements Runnable {
+public class MPlayerListener extends PlayerListener implements Runnable {
 	mChat plugin;
+	mChatAPI mAPI;
 	
-	public playerListener(mChat plugin) {
+	public MPlayerListener(mChat plugin) {
 		this.plugin = plugin;
 	}
 	
@@ -19,14 +20,14 @@ public class playerListener extends PlayerListener implements Runnable {
 		final Player player = event.getPlayer();
 		String msg = event.getMessage();
 		if (msg == null) return;
-		event.setFormat(plugin.parseChat(player, msg));
+		event.setFormat(mAPI.parseChat(player, msg));
 	}
 	
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		Player player = event.getPlayer();
 		String msg = event.getJoinMessage();
 		if (msg == null) return;
-		event.setJoinMessage(plugin.parseJoin(player) + " " + replaceMess(player, "joinMessage"));
+		event.setJoinMessage(mAPI.parseJoin(player) + " " + replaceMess("joinMessage"));
 	}
 	
 	public void onPlayerKick(PlayerKickEvent event) {
@@ -34,17 +35,17 @@ public class playerListener extends PlayerListener implements Runnable {
 		Player player = event.getPlayer();
 		String msg = event.getLeaveMessage();
 		if (msg == null) return;
-		event.setLeaveMessage(plugin.parseJoin(player) + " " + replaceMess(player, "kickMessage"));
+		event.setLeaveMessage(mAPI.parseJoin(player) + " " + replaceMess("kickMessage"));
 	}
 	
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		Player player = event.getPlayer();
 		String msg = event.getQuitMessage();
 		if (msg == null) return;
-		event.setQuitMessage(plugin.parseJoin(player) + " " + replaceMess(player, "leaveMessage"));
+		event.setQuitMessage(mAPI.parseJoin(player) + " " + replaceMess("leaveMessage"));
 	}
 	
-	public String replaceMess(Player player, String string) {
+	private String replaceMess(String string) {
 		if (string.equals("joinMessage")) {
 			string = plugin.joinMessage;
 		} else if (string.equals("kickMessage")) {
@@ -52,9 +53,10 @@ public class playerListener extends PlayerListener implements Runnable {
 		} else if (string.equals("leaveMessage")) {
 			string = plugin.leaveMessage;
 		}
-		return plugin.addColour(string);
+		return mAPI.addColour(string);
 	}
 
 	public void run() {
 	}
 }
+
